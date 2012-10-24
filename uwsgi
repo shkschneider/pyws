@@ -1,0 +1,189 @@
+#!/usr/bin/env python
+
+from datetime import datetime
+import commands
+import glob
+import time
+import sys
+import os
+import re
+
+### Settings ###
+
+UWSGI = 'uwsgi'
+CONF = 'uwsgi.conf'
+
+### You should not edit anything below this line ###
+
+class Uwsgi(object):
+
+    def __init__(self):
+        self.root = os.path.dirname(os.path.realpath(__file__))
+        self.uwsgi = UWSGI
+
+        for path in os.environ['PATH'].split(os.pathsep):
+            exe_file = os.path.join(path, 'uwsgi')
+            if os.path.isfile(exe_file) and os.access(exe_file, os.X_OK):
+                self.uwsgi = exe_file
+
+        if not self.uwsgi:
+            print 'Error: uwsgi not found'
+            print '       pip install [--user] uwsgi'
+            sys.exit(1)
+
+        self.pid = self.pidof()
+
+    def status(self):
+        if os.path.exists('/proc/%d' % (self.pid)):
+            reply(1, 'Server is UP')
+        else:
+            reply(1, 'Server is DOWN')
+        return True
+
+    def stop(self):
+        if self.pid:
+            # SIGINT will kill the master process
+            code = run_for_code(['kill -9 %d' % (self.pid),
+                                 'rm -f uwsgi.pid'])
+            if code == 0:
+                self.pid = 0
+                reply(1, 'Server stopped')
+                return True
+            reply(1, 'Could not stop: Error #%d' % (code))
+        else:
+            reply(1, 'Server is not started')
+        return False
+
+    def start(self):
+        if not self.pid:
+            code = run_for_code(['echo -n > uwsgi.log',
+                                 '%s --ini %s/%s 2>/dev/null' % (self.uwsgi, self.root, CONF)])
+            if code == 0:
+                self.pid = self.pidof()
+                reply(1, 'Server started')
+                reply(2, 'http://localhost:9000/')
+                reply(2, 'http://localhost:9000/hello/webservice')
+                return True
+            reply(1, 'Could not start: Error #%d' % (code))
+        else:
+            reply(1, 'Server is not stopped')
+        return False
+
+    def check(self):
+        code = run_for_code(['%s --no-server --ini %s/%s 2>/dev/null' % (self.uwsgi, self.root, CONF)])
+        if code == 0:
+            reply(1, 'Server checked')
+            return True
+        reply(1, 'Could not check: Error #%d' % (code))
+        return False
+
+    def restart(self):
+        if self.stop() and self.start():
+            return True
+        return False
+
+    def reload(self):
+        if self.pid:
+            # SIGHUP make uWSGI reload
+            code = run_for_code(["kill -1 %d" % (self.pid)])
+            if code == 0:
+                reply(1, 'Server reloaded')
+                return True
+            reply(1, 'Could not reload: Error #%d' % (code))
+        else:
+            reply(1, 'Server is not started')
+        return False
+
+    def pidof(self):
+        pid = commands.getoutput("ps xf | egrep '[0-9]:[0-9]{2} %s --ini %s/%s' | sed -r 's/^\s+//'" % (self.uwsgi, self.root, CONF))
+        if len(pid):
+            pid = pid.split(' ')[0]
+            if re.match(r'^[0-9]+$', pid):
+                return int(pid)
+        return 0
+
+
+APP = Uwsgi()
+USAGE = {'status': {'usage': 'status',
+                    'desc': 'Gets the server status',
+                    'func': APP.status},
+         'stop': {'usage': 'stop',
+                  'desc': 'Stops the server',
+                  'func': APP.stop},
+         'start': {'usage': 'start',
+                   'desc': 'Starts the server',
+                   'func': APP.start},
+         'check': {'usage': 'check',
+                   'desc': 'Checks the server\'s configuration',
+                   'func': APP.check},
+         'restart': {'usage': 'restart',
+                     'desc': 'Stops and starts the server',
+                     'func': APP.restart},
+         'reload': {'usage': 'reload',
+                    'desc': 'Reloads server\'s configuration',
+                    'func': APP.reload},
+         'help': {'usage': 'help',
+                  'desc': 'This brief help page',
+                  'func': None}}
+
+
+def when():
+    when = datetime.now()
+    return '%04d-%02d-%02d-%02d-%02d-%02d' % \
+        (when.year, when.month, when.day, when.hour, when.minute, when.second)
+
+
+def run_for_code(cmds):
+    for cmd in cmds:
+        code = os.system(cmd)
+        if code:
+            return code
+    return 0
+
+
+def reply(n, s):
+    sp = ''
+    while n:
+        sp += '     '
+        n -= 1
+    print '[%s] %s%s' % (when(), sp, str(s))
+
+
+def usage(terminate=False, msg=None):
+    if msg:
+        print msg
+    print 'Usage: %11s    <COMMAND>' % (__file__)
+    for func in sorted(USAGE, key=USAGE.get('usage'), reverse=False):
+        print '%18s -- %s' % (USAGE[func]['usage'], USAGE[func]['desc'])
+    if terminate:
+        sys.exit(1)
+
+
+def main(cmd):
+    if USAGE.get(cmd):
+        print '[%s] %s' % (when(), cmd.capitalize())
+        USAGE[cmd]['func']()
+    else:
+        usage(True, 'Unknown command: %s' % (argv))
+
+
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        usage(True)
+    start = datetime.now()
+
+    for argv in sys.argv[1:]:
+        if argv == '--':
+            continue
+        if argv == 'help':
+            usage(False)
+            sys.exit(0)
+        main(argv)
+
+    end = datetime.now()
+    elapsed = end - start
+    reply(0, 'Took %ss' % ((elapsed.microseconds + (elapsed.seconds + elapsed.days * 24 * 3600) * 1e6) / 1e6))
+    sys.exit(0)
+
+
+# EOF

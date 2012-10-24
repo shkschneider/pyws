@@ -1,4 +1,4 @@
-pyjws
-=====
+pyws
+====
 
-Python / Json / WebService
+Minimalist Python WebService (uWSGI / BottlePy)
