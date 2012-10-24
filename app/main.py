@@ -7,20 +7,21 @@ import sys
 bottle.BaseResponse.default_content_type = 'application/json; charset=UTF-8'
 bottle.ERROR_PAGE_TEMPLATE = str(reply.build(False, None))
 
-URI_PARTS = {'name': '<name:re:[a-zA-Z]{6,24}>'}
-
-def route(uri, func, method='GET'):
-    return [uri.format(**URI_PARTS), func, method]
-
-URI_MAP = [route('/', webservice.ws),
-           route('/hello/{name}', webservice.ws_hello)]
-
 APP = bottle.app()
 
-for uri, func, method in URI_MAP:
-    APP.route(uri, method=method, apply=[plugins.PreRequest])(func)
+# :int :float :path :re:exp
+URI_PARTS = {'name': '<name:re:[a-zA-Z]{6,24}>'}
+
+# HEAD GET POST
+def route(uris, func, methods=['GET']):
+    for uri in uris:
+        for method in methods:
+            APP.route(uri.format(**URI_PARTS), method, func)
+
+route(['/'], webservice.ws)
+route(['/hello/{name}'], webservice.ws_hello)
 
 if __name__ == '__main__':
-    bottle.run(APP, server='wsgiref', port=9000, host='0.0.0.0')
+    bottle.run(APP, server='wsgiref', port=9000, host='0.0.0.0', debug=True, reloader=True)
 
 # EOF
