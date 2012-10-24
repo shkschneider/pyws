@@ -1,14 +1,32 @@
-import webservice
 import pyws
-import sys
+
+'''Here are some tiny webservice calls'''
+
+def ws():
+    return pyws.json(True)
+
+def ws_hello(name):
+    return pyws.json(True, 'Hello ' + name)
+
+# ...
+
+'''This is a BottlePy, WSGI-compliant application object'''
 
 APP = pyws.app()
 
+'''Here are defined URI components (int, float, path or re)'''
+
 pyws.URI_PARTS = {'name': '<name:re:[a-zA-Z]{6,24}>'}
-pyws.route(['/', '/favicon.ico'], webservice.ws)
-pyws.route(['/hello/{name}'], webservice.ws_hello)
+
+'''Here are the routes: URIs, function[, method (GET or POST)]'''
+
+pyws.route(['/', '/favicon.ico'], ws)
+pyws.route(['/hello/{name}'], ws_hello)
+# ...
+
+'''This script can also be run from the command line (development mode)'''
 
 if __name__ == '__main__':
-    pyws.run(host='0.0.0.0', port=9000)
+    pyws.run()
 
 # EOF

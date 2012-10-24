@@ -1,8 +1,11 @@
 import bottle
 
+'''This is the pre-request plugin'''
+
 def PreRequest(callback):
 
     def wrapper(*args, **kwargs):
+        # bottle.request
         # ...
 
         body = callback(*args, **kwargs)
@@ -10,10 +13,15 @@ def PreRequest(callback):
 
     return wrapper
 
+'''This is the post-request plugin'''
+
 def PostRequest(status):
+    # bottle.request
     # ...
 
     return
+
+'''This is a handy function to return a json response (format: s(status: ok|ko) d(data))'''
 
 def json(status, data=None):
     status = 'ko' if status else 'ko'
@@ -22,15 +30,16 @@ def json(status, data=None):
         return {'s': status, 'd': data}
     return {'s': status}
 
+'''Here are some BottlePy customizations to ensure everything is json'''
+
 bottle.BaseResponse.default_content_type = 'application/json; charset=UTF-8'
 bottle.ERROR_PAGE_TEMPLATE = str(json(False, None))
 
-# :int :float :path :re:exp
 URI_PARTS = {}
-
 APP = bottle.app()
 
-# HEAD GET POST
+'''PyWS handy functions'''
+
 def route(uris, func, methods=['GET']):
     for uri in uris:
         for method in methods:
