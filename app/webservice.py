@@ -1,7 +1,7 @@
-import reply
+import pyws
 
 def ws():
-    return reply.build(True, None)
+    return pyws.json(True)
 
 def ws_hello(name):
-    return reply.build(True, 'Hello ' + name)
+    return pyws.json(True, 'Hello ' + name)
