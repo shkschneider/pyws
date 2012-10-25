@@ -62,7 +62,7 @@ class Uwsgi(object):
                 self.pid = self.pidof()
                 reply(1, 'Server started')
                 reply(2, 'http://localhost:9000/')
-                reply(2, 'http://localhost:9000/hello/webservice')
+                reply(2, 'http://localhost:9000/hello/{name}')
                 return True
             reply(1, 'Could not start: Error #%d' % (code))
         else:
@@ -153,8 +153,12 @@ def usage(terminate=False, msg=None):
     if msg:
         print msg
     print 'Usage: %11s    <COMMAND>' % (__file__)
+    print ''
     for func in sorted(USAGE, key=USAGE.get('usage'), reverse=False):
         print '%18s -- %s' % (USAGE[func]['usage'], USAGE[func]['desc'])
+    print ''
+    print 'To run this in development mode, use python directly:'
+    print '$ python app/main.py'
     if terminate:
         sys.exit(1)
 
