@@ -44,7 +44,8 @@ class Uwsgi(object):
         if self.pid:
             # SIGINT will kill the master process
             code = run_for_code(['kill -9 %d' % (self.pid),
-                                 'rm -f uwsgi.pid'])
+                                 'rm -f uwsgi.pid',
+                                 'rm -f uwsgi.log'])
             if code == 0:
                 self.pid = 0
                 reply(1, 'Server stopped')
