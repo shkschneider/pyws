@@ -104,27 +104,13 @@ class Uwsgi(object):
 
 
 APP = Uwsgi()
-USAGE = {'status': {'usage': 'status',
-                    'desc': 'Gets the server status',
-                    'func': APP.status},
-         'stop': {'usage': 'stop',
-                  'desc': 'Stops the server',
-                  'func': APP.stop},
-         'start': {'usage': 'start',
-                   'desc': 'Starts the server',
-                   'func': APP.start},
-         'check': {'usage': 'check',
-                   'desc': 'Checks the server\'s configuration',
-                   'func': APP.check},
-         'restart': {'usage': 'restart',
-                     'desc': 'Stops and starts the server',
-                     'func': APP.restart},
-         'reload': {'usage': 'reload',
-                    'desc': 'Reloads server\'s configuration',
-                    'func': APP.reload},
-         'help': {'usage': 'help',
-                  'desc': 'This brief help page',
-                  'func': None}}
+USAGE = [['status', 'Gets the server status', APP.status],
+         ['stop', 'Stops the server', APP.stop],
+         ['start', 'Starts the server', APP.start],
+         ['check', 'Checks the server\'s configuration', APP.check],
+         ['restart', 'Stops and starts the server', APP.restart],
+         ['reload', 'Reloads server\'s configuration', APP.reload],
+         ['help', 'This brief help page', None]]
 
 
 def when():
@@ -154,8 +140,8 @@ def usage(terminate=False, msg=None):
         print msg
     print 'Usage: %11s    <COMMAND>' % (__file__)
     print ''
-    for func in sorted(USAGE, key=USAGE.get('usage'), reverse=False):
-        print '%18s -- %s' % (USAGE[func]['usage'], USAGE[func]['desc'])
+    for usage, desc, func in USAGE:
+        print '%18s -- %s' % (usage, desc)
     print ''
     print 'To run this in development mode, use python directly:'
     print '$ python app/main.py'
@@ -164,11 +150,12 @@ def usage(terminate=False, msg=None):
 
 
 def main(cmd):
-    if USAGE.get(cmd):
-        print '[%s] %s' % (when(), cmd.capitalize())
-        USAGE[cmd]['func']()
-    else:
-        usage(True, 'Unknown command: %s' % (argv))
+    for usage, desc, func in USAGE:
+        if cmp(usage, cmd) == 0:
+            print '[%s] %s' % (when(), cmd.capitalize())
+            func()
+            return
+    usage(True, 'Unknown command: %s' % (argv))
 
 
 if __name__ == '__main__':
