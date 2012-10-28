@@ -1,38 +1,46 @@
 import bottle
 
-'''This is the pre-request plugin'''
+'''Here are plugins (pre request and post request)'''
 
-def PreRequest(callback):
+def plugin(pre_func=None, post_func=None):
 
-    def wrapper(*args, **kwargs):
-        # bottle.request
-        # ...
+    def Plugin(callback):
 
-        body = callback(*args, **kwargs)
-        return body
+        def wrapper(*args, **kwargs):
+            if pre_func:
+                pre_func()
+            body = callback(*args, **kwargs)
+            if post_func:
+                post_func()
+            return body
 
-    return wrapper
+        return wrapper
 
-'''This is the post-request plugin'''
+    bottle.install(Plugin)
 
-def PostRequest(status):
-    # bottle.request
-    # ...
+'''Handy bottle function'''
 
-    return
+def request():
+    '''<http://bottlepy.org/docs/dev/api.html#the-request-object>'''
+    return bottle.request
+
+def response():
+    '''<http://bottlepy.org/docs/dev/api.html#the-response-object>'''
+    return bottle.response
 
 '''This is a handy function to return a json response (format: s(status: ok|ko) d(data))'''
 
 def json(status, data=None):
+    bottle.response.charset = 'UTF-8'
+    bottle.response.content_type = 'application/json'
+
     status = 'ko' if status else 'ko'
-    PostRequest(status)
     if data:
         return {'s': status, 'd': data}
     return {'s': status}
 
 '''Here are some BottlePy customizations to ensure everything is json'''
 
-bottle.BaseResponse.default_content_type = 'application/json; charset=UTF-8'
 bottle.ERROR_PAGE_TEMPLATE = str(json(False, None))
 
 URI_PARTS = {}
@@ -43,12 +51,12 @@ APP = bottle.app()
 def route(uris, func, methods=['GET']):
     for uri in uris:
         for method in methods:
-            APP.route(uri.format(**URI_PARTS), method, func, apply=[PreRequest])
+            APP.route(uri.format(**URI_PARTS), method, func)
 
 def app():
     return APP
 
-def run(host='0.0.0.0', port=9000, server='wsgiref'):
-    bottle.run(APP, server=server, port=port, host=host, debug=True, reloader=True)
+def run(host='0.0.0.0', port=9000, server='wsgiref', debug=True, reloader=True):
+    bottle.run(APP, host=host, port=port, server=server, debug=debug, reloader=reloader)
 
 # EOF

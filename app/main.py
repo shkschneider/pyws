@@ -24,6 +24,16 @@ pyws.route(['/', '/favicon.ico'], ws)
 pyws.route(['/hello/{name}'], ws_hello)
 # ...
 
+'''Here are custom plugins'''
+
+def pre_request():
+    print 'PreRequest'
+
+def post_request():
+    print 'PostRequest'
+
+pyws.plugin(pre_request, post_request)
+
 '''This script can also be run from the command line (development mode)'''
 
 if __name__ == '__main__':
