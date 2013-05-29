@@ -31,7 +31,7 @@ def response():
 '''This is a handy function to return a json response (format: s(status: ok|ko) d(data))'''
 
 def json(status, data=None):
-    bottle.response.charset = 'UTF-8'
+    #bottle.response.charset = 'UTF-8'
     bottle.response.content_type = 'application/json'
 
     status = 'ko' if status else 'ko'
